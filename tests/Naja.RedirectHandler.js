@@ -1,5 +1,5 @@
 import mockNaja from './setup/mockNaja';
-import fakeXhr from './setup/fakeXhr';
+import fakeFetch from './setup/fakeFetch';
 import {assert} from 'chai';
 import sinon from 'sinon';
 
@@ -7,7 +7,7 @@ import RedirectHandler from '../src/core/RedirectHandler';
 
 
 describe('RedirectHandler', function () {
-	fakeXhr();
+	fakeFetch();
 
 	it('constructor()', function () {
 		const naja = mockNaja();
@@ -20,7 +20,7 @@ describe('RedirectHandler', function () {
 		mock.verify();
 	});
 
-	it('reads redirect from response', function (done) {
+	it('reads redirect from response', function () {
 		const naja = mockNaja();
 		const redirectHandler = new RedirectHandler(naja);
 
@@ -29,15 +29,13 @@ describe('RedirectHandler', function () {
 			.withExactArgs('/RedirectHandler/redirect/redirectTo', true)
 			.once();
 
-		naja.makeRequest('GET', '/RedirectHandler/redirect').then(() => {
+		this.fetchMock.respond(200, {'Content-Type': 'application/json'}, {redirect: '/RedirectHandler/redirect/redirectTo', forceRedirect: true});
+		return naja.makeRequest('GET', '/RedirectHandler/redirect').then(() => {
 			mock.verify();
-			done();
 		});
-
-		this.requests.pop().respond(200, {'Content-Type': 'application/json'}, JSON.stringify({redirect: '/RedirectHandler/redirect/redirectTo', forceRedirect: true}));
 	});
 
-	it('reads forceRedirect from options', function (done) {
+	it('reads forceRedirect from options', function () {
 		const naja = mockNaja();
 		const redirectHandler = new RedirectHandler(naja);
 
@@ -46,15 +44,13 @@ describe('RedirectHandler', function () {
 			.withExactArgs('/RedirectHandler/redirect/redirectTo', true)
 			.once();
 
-		naja.makeRequest('GET', '/RedirectHandler/forceRedirect/options', null, {forceRedirect: true}).then(() => {
+		this.fetchMock.respond(200, {'Content-Type': 'application/json'}, {redirect: '/RedirectHandler/redirect/redirectTo', forceRedirect: false});
+		return naja.makeRequest('GET', '/RedirectHandler/forceRedirect/options', null, {forceRedirect: true}).then(() => {
 			mock.verify();
-			done();
 		});
-
-		this.requests.pop().respond(200, {'Content-Type': 'application/json'}, JSON.stringify({redirect: '/RedirectHandler/redirect/redirectTo', forceRedirect: false}));
 	});
 
-	it('stops event propagation', function (done) {
+	it('stops event propagation', function () {
 		const naja = mockNaja();
 		const redirectHandler = new RedirectHandler(naja);
 
@@ -66,14 +62,12 @@ describe('RedirectHandler', function () {
 		const nextListener = sinon.spy();
 		naja.addEventListener('success', nextListener);
 
-		naja.makeRequest('GET', '/RedirectHandler/stopEventPropagation').then(() => {
+		this.fetchMock.respond(200, {'Content-Type': 'application/json'}, {redirect: '/RedirectHandler/stopEventPropagation/redirectTo', forceRedirect: true});
+		return naja.makeRequest('GET', '/RedirectHandler/stopEventPropagation').then(() => {
 			assert.isFalse(nextListener.called);
 			mock.verify();
 			mock.restore();
-			done();
 		});
-
-		this.requests.pop().respond(200, {'Content-Type': 'application/json'}, JSON.stringify({redirect: '/RedirectHandler/stopEventPropagation/redirectTo', forceRedirect: true}));
 	});
 
 	it('makes request if forceRedirect is false', function () {
