@@ -2,11 +2,11 @@ export default class RedirectHandler {
 	constructor(naja) {
 		this.naja = naja;
 
-		naja.addEventListener('success', (evt) => {
-			const {payload, options} = evt;
+		naja.addEventListener('success', (event) => {
+			const {payload, options} = event.detail;
 			if (payload.redirect) {
 				this.makeRedirect(payload.redirect, payload.forceRedirect || options.forceRedirect);
-				evt.stopImmediatePropagation();
+				event.stopImmediatePropagation();
 			}
 		});
 
